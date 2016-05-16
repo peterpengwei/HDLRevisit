@@ -1,4 +1,3 @@
-#include <inttypes.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +8,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <CL/cl.h>
+#include <CL/opencl.h>
 
 ///// File and section functions
 char *readfile(int fd);

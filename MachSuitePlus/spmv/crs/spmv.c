@@ -22,3 +22,19 @@ void spmv(TYPE val[NNZ], int32_t cols[NNZ], int32_t rowDelimiters[N+1], TYPE vec
 }
 
 
+void workload(TYPE val[NNZ], int32_t cols[NNZ], int32_t rowDelimiters[N+1], TYPE vec[N], TYPE out[N]){
+#pragma HLS INTERFACE m_axi port=val offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=cols offset=slave bundle=gmem2
+#pragma HLS INTERFACE m_axi port=rowDelimiters offset=slave bundle=gmem2
+#pragma HLS INTERFACE m_axi port=vec offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem1
+#pragma HLS INTERFACE s_axilite port=val bundle=control
+#pragma HLS INTERFACE s_axilite port=cols bundle=control
+#pragma HLS INTERFACE s_axilite port=rowDelimiters bundle=control
+#pragma HLS INTERFACE s_axilite port=vec bundle=control
+#pragma HLS INTERFACE s_axilite port=out bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	spmv(val, cols, rowDelimiters, vec, out);
+	return;
+}

@@ -49,3 +49,12 @@ void ms_mergesort(TYPE a[SIZE]) {
         }
     }
 }
+
+void workload(TYPE *a) {
+#pragma HLS INTERFACE m_axi offset=slave port=a bundle=gmem
+#pragma HLS INTERFACE s_axilite port=a bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	ms_mergesort(a);
+	return;
+}

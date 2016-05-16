@@ -205,7 +205,6 @@ void aes256_encrypt_ecb(aes256_context *ctx, uint8_t* k, uint8_t* buf)
 } /* aes256_encrypt */
 
 void workload( uint8_t* key, uint8_t* value) {
-
 #pragma HLS INTERFACE m_axi port=key offset=slave bundle=gmem
 #pragma HLS INTERFACE m_axi port=value offset=slave bundle=gmem
 #pragma HLS INTERFACE s_axilite port=key bundle=control

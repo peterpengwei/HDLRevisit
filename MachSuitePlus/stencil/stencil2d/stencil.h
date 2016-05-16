@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "support.h"
+#include <inttypes.h>
 
 //Define input sizes
 #define col_size 64

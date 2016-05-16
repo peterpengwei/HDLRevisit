@@ -1,11 +1,79 @@
 #include "viterbi.h"
+#include "support.h"
 #include <string.h>
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
-void run_benchmark( void *vargs ) {
+void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
-  viterbi( args->obs, args->init, args->transition, args->emission, args->path );
+  // Create device buffers
+  //
+  cl_mem obs_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->obs), NULL, NULL);
+  cl_mem init_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->init), NULL, NULL);
+  cl_mem transition_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->transition), NULL, NULL);
+  cl_mem emission_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->emission), NULL, NULL);
+  cl_mem path_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->path), NULL, NULL);
+  if (!obs_buffer || !init_buffer || !transition_buffer || !emission_buffer || !path_buffer)
+  {
+    printf("Error: Failed to allocate device memory!\n");
+    printf("Test failed\n");
+    exit(1);
+  }    
+
+  // Write our data set into device buffers  
+  //
+  int err;
+  err = clEnqueueWriteBuffer(commands, obs_buffer, CL_TRUE, 0, sizeof(args->obs), args->obs, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, init_buffer, CL_TRUE, 0, sizeof(args->init), args->init, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, transition_buffer, CL_TRUE, 0, sizeof(args->transition), args->transition, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, emission_buffer, CL_TRUE, 0, sizeof(args->emission), args->emission, 0, NULL, NULL);
+  if (err != CL_SUCCESS)
+  {
+      printf("Error: Failed to write to device memory!\n");
+      printf("Test failed\n");
+      exit(1);
+  }
+    
+  // Set the arguments to our compute kernel
+  //
+  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &obs_buffer);
+  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &init_buffer);
+  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &transition_buffer);
+  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &emission_buffer);
+  err  |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &path_buffer);
+  if (err != CL_SUCCESS)
+  {
+    printf("Error: Failed to set kernel arguments! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
+
+  // Execute the kernel over the entire range of our 1d input data set
+  // using the maximum number of work group items for this device
+  //
+
+#ifdef C_KERNEL
+  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#else
+  printf("Error: OpenCL kernel is not currently supported!\n");
+  exit(1);
+#endif
+  if (err)
+  {
+    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
+
+  // Read back the results from the device to verify the output
+  //
+  err = clEnqueueReadBuffer( commands, path_buffer, CL_TRUE, 0, sizeof(args->path), args->path, 0, NULL, NULL );  
+  if (err != CL_SUCCESS)
+  {
+    printf("Error: Failed to read output array! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
 }
 
 /* Input format:

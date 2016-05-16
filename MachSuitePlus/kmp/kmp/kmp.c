@@ -42,3 +42,17 @@ int kmp(char pattern[PATTERN_SIZE], char input[STRING_SIZE], int32_t kmpNext[PAT
     }
     return 0;
 }
+
+void workload(char pattern[PATTERN_SIZE], char input[STRING_SIZE], int32_t n_matches[1]) {
+#pragma HLS INTERFACE m_axi port=pattern offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=input offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=n_matches offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=pattern bundle=control
+#pragma HLS INTERFACE s_axilite port=input bundle=control
+#pragma HLS INTERFACE s_axilite port=n_matches bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	int32_t kmpNext[PATTERN_SIZE];
+	kmp(pattern, input, kmpNext, n_matches);
+	return;
+}

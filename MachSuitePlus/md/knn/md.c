@@ -32,6 +32,9 @@ loop_j : for( j = 0; j < maxNeighbors; j++){
              // Get neighbor
              jidx = NL[i*maxNeighbors + j];
              // Look up x,y,z positions
+	     if (jidx < 0 || jidx >= nAtoms) {
+	       printf("[ERROR] Array access %d out of bound!\n", jidx);
+	     }
              j_x = position_x[jidx];
              j_y = position_y[jidx];
              j_z = position_z[jidx];
@@ -55,4 +58,30 @@ loop_j : for( j = 0; j < maxNeighbors; j++){
          force_z[i] = fz;
          //printf("dF=%lf,%lf,%lf\n", fx, fy, fz);
          }
+}
+
+void workload(TYPE force_x[nAtoms],
+               TYPE force_y[nAtoms],
+               TYPE force_z[nAtoms],
+               TYPE position_x[nAtoms],
+               TYPE position_y[nAtoms],
+               TYPE position_z[nAtoms],
+               int32_t NL[nAtoms*maxNeighbors]) {
+#pragma HLS INTERFACE m_axi port=force_x offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=force_y offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=force_z offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_x offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_y offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_z offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=NL offset=slave bundle=gmem2
+#pragma HLS INTERFACE s_axilite port=force_x bundle=control
+#pragma HLS INTERFACE s_axilite port=force_y bundle=control
+#pragma HLS INTERFACE s_axilite port=force_z bundle=control
+#pragma HLS INTERFACE s_axilite port=position_x bundle=control
+#pragma HLS INTERFACE s_axilite port=position_y bundle=control
+#pragma HLS INTERFACE s_axilite port=position_z bundle=control
+#pragma HLS INTERFACE s_axilite port=NL bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+	md_kernel(force_x, force_y, force_z, position_x, position_y, position_z, NL);
+	return;
 }

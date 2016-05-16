@@ -28,3 +28,16 @@ void stencil3d(TYPE C[2], TYPE orig[SIZE], TYPE sol[SIZE]) {
         }
     }
 }
+
+void workload(TYPE C[2], TYPE orig[SIZE], TYPE sol[SIZE]) {
+#pragma HLS INTERFACE m_axi port=C offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=orig offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=sol offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=C bundle=control
+#pragma HLS INTERFACE s_axilite port=orig bundle=control
+#pragma HLS INTERFACE s_axilite port=sol bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	stencil3d(C, orig, sol);
+	return;
+}

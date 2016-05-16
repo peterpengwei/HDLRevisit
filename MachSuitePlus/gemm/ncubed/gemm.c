@@ -18,3 +18,16 @@ void gemm( TYPE m1[N], TYPE m2[N], TYPE prod[N] ){
         }
     }
 }
+
+void workload(TYPE m1[N], TYPE m2[N], TYPE prod[N]){
+#pragma HLS INTERFACE m_axi port=m1 offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=m2 offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=prod offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=m1 bundle=control
+#pragma HLS INTERFACE s_axilite port=m2 bundle=control
+#pragma HLS INTERFACE s_axilite port=prod bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	gemm(m1, m2, prod);
+	return;
+}

@@ -1,23 +1,11 @@
 #include "aes.h"
 #include "support.h"
 #include <string.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <unistd.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <CL/opencl.h>
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
 void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
-
   // Create device buffers
   //
   cl_mem key_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->k), NULL, NULL);

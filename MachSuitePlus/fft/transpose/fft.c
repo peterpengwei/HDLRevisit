@@ -412,6 +412,7 @@ void workload(TYPE work_x[512], TYPE work_y[512]){
 #pragma HLS INTERFACE s_axilite port=work_x   bundle=control
 #pragma HLS INTERFACE s_axilite port=work_y   bundle=control
 #pragma HLS INTERFACE s_axilite port=return   bundle=control
+
 	fft1D_512(work_x, work_y);
 	return;
 }

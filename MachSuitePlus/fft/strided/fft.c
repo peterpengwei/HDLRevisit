@@ -39,6 +39,7 @@ void workload(double real[SIZE], double img[SIZE], double real_twid[SIZE/2], dou
 #pragma HLS INTERFACE s_axilite port=real_twid bundle=control
 #pragma HLS INTERFACE s_axilite port=img_twid  bundle=control
 #pragma HLS INTERFACE s_axilite port=return    bundle=control
+
 	fft(real, img, real_twid, img_twid);
 	return;
 }

@@ -103,3 +103,15 @@ void ss_sort(int a[SIZE], int b[SIZE], int bucket[BUCKETSIZE], int sum[SCAN_RADI
     }
     // If trip count is even, buffer A will be valid at the end.
 }
+
+void workload(int a[SIZE], int b[SIZE]) {
+#pragma HLS INTERFACE m_axi offset=slave port=a bundle=gmem
+#pragma HLS INTERFACE m_axi offset=slave port=b bundle=gmem
+#pragma HLS INTERFACE s_axilite port=a bundle=control
+#pragma HLS INTERFACE s_axilite port=b bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	int bucket[BUCKETSIZE+1], sum[SCAN_RADIX];
+	ss_sort(a, b, bucket, sum);
+	return;
+}

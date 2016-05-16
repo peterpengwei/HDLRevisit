@@ -5,7 +5,7 @@ http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "support.h"
+#include <inttypes.h>
 
 // These constants valid for the IEEE 494 bus interconnect matrix
 #define NNZ 1666

@@ -10,10 +10,12 @@ Hong, Oguntebi, Olukotun. "Efficient Parallel Graph Exploration on Multi-Core CP
 #define Q_POP() { q_out = (q_out+1)%N_NODES; }
 #define Q_EMPTY() (q_in>q_out ? q_in==q_out+1 : (q_in==0)&&(q_out==N_NODES-1))
 
-void bfs(node_t nodes[N_NODES], edge_t edges[N_EDGES],
-            node_index_t starting_node, level_t level[N_NODES],
-            edge_index_t level_counts[N_LEVELS])
-{
+void bfs(edge_index_t *edge_begin, 
+	 edge_index_t *edge_end,
+	 node_index_t *dst,
+         node_index_t starting_node,
+	 level_t *level,
+         edge_index_t *level_counts) {
   node_index_t queue[N_NODES];
   node_index_t q_in, q_out;
   node_index_t dummy;
@@ -36,10 +38,10 @@ void bfs(node_t nodes[N_NODES], edge_t edges[N_EDGES],
       break;
     n = Q_PEEK();
     Q_POP();
-    edge_index_t tmp_begin = nodes[n].edge_begin;
-    edge_index_t tmp_end = nodes[n].edge_end;
+    edge_index_t tmp_begin = edge_begin[n];
+    edge_index_t tmp_end = edge_end[n];
     loop_neighbors: for( e=tmp_begin; e<tmp_end; e++ ) {
-      node_index_t tmp_dst = edges[e].dst;
+      node_index_t tmp_dst = dst[e];
       level_t tmp_level = level[tmp_dst];
 
       if( tmp_level ==MAX_LEVEL ) { // Unmarked
@@ -57,4 +59,27 @@ void bfs(node_t nodes[N_NODES], edge_t edges[N_EDGES],
     printf(" %d", level_counts[i]);
   printf("\n");
   */
+}
+void workload(edge_index_t *edge_begin, 
+	      edge_index_t *edge_end,
+	      node_index_t *dst,
+              node_index_t *p_starting_node,
+	      level_t *level,
+              edge_index_t *level_counts) {
+#pragma HLS INTERFACE m_axi port=edge_begin offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=edge_end offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=dst offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=p_starting_node offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=level offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=level_counts offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=edge_begin bundle=control
+#pragma HLS INTERFACE s_axilite port=edge_end bundle=control
+#pragma HLS INTERFACE s_axilite port=dst bundle=control
+#pragma HLS INTERFACE s_axilite port=p_starting_node bundle=control
+#pragma HLS INTERFACE s_axilite port=level bundle=control
+#pragma HLS INTERFACE s_axilite port=level_counts bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	bfs(edge_begin, edge_end, dst, *p_starting_node, level, level_counts);
+	return;
 }

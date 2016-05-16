@@ -1,7 +1,6 @@
 //Standard Libraries
 #include <stdio.h>
 #include <stdlib.h>
-#include "support.h"
 
 //Define compute data type
 #define TYPE double

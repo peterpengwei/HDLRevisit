@@ -5,7 +5,6 @@ Implementation based on http://www-igm.univ-mlv.fr/~lecroq/string/node8.html
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "support.h"
 
 #define PATTERN_SIZE 4
 #define STRING_SIZE (32411)

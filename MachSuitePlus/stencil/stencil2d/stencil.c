@@ -17,3 +17,16 @@ void stencil (TYPE orig[row_size * col_size], TYPE sol[row_size * col_size], TYP
         }
     }
 }
+
+void workload(TYPE orig[row_size * col_size], TYPE sol[row_size * col_size], TYPE filter[f_size]){
+#pragma HLS INTERFACE m_axi port=orig offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=sol offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=filter offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=orig bundle=control
+#pragma HLS INTERFACE s_axilite port=sol bundle=control
+#pragma HLS INTERFACE s_axilite port=filter bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+
+	stencil(orig, sol, filter);
+	return;
+}

@@ -1,12 +1,94 @@
 #include "bfs.h"
+#include "support.h"
 #include <string.h>
 #include <unistd.h>
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
-void run_benchmark( void *vargs ) {
+void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
-  bfs(args->nodes, args->edges, args->starting_node, args->level, args->level_counts);
+  node_index_t dst[N_EDGES];
+  edge_index_t edge_begin[N_NODES];
+  edge_index_t edge_end[N_NODES];
+  int i;
+  for (i = 0; i < N_EDGES; i++) dst[i] = args->edges[i].dst;
+  for (i = 0; i < N_NODES; i++) {
+  	edge_begin[i] = args->nodes[i].edge_begin;
+  	edge_end[i] = args->nodes[i].edge_end;
+  }
+  // Create device buffers
+  //
+  cl_mem edge_begin_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(edge_begin), NULL, NULL);
+  cl_mem edge_end_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(edge_end), NULL, NULL);
+  cl_mem dst_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(dst), NULL, NULL);
+  cl_mem starting_node = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(node_index_t), NULL, NULL);
+  cl_mem level_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->level), NULL, NULL);
+  cl_mem level_counts_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->level_counts), NULL, NULL);
+  if (!edge_begin_buffer || !edge_end_buffer || !dst_buffer || !starting_node || !level_buffer || !level_counts_buffer)
+  {
+    printf("Error: Failed to allocate device memory!\n");
+    printf("Test failed\n");
+    exit(1);
+  }    
+
+  // Write our data set into device buffers  
+  //
+  int err;
+  err = clEnqueueWriteBuffer(commands, edge_begin_buffer, CL_TRUE, 0, sizeof(edge_begin), edge_begin, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, edge_end_buffer, CL_TRUE, 0, sizeof(edge_end), edge_end, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, dst_buffer, CL_TRUE, 0, sizeof(dst), dst, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, starting_node, CL_TRUE, 0, sizeof(node_index_t), &(args->starting_node), 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, level_buffer, CL_TRUE, 0, sizeof(args->level), args->level, 0, NULL, NULL);
+  err |= clEnqueueWriteBuffer(commands, level_counts_buffer, CL_TRUE, 0, sizeof(args->level_counts), args->level_counts, 0, NULL, NULL);
+  if (err != CL_SUCCESS)
+  {
+      printf("Error: Failed to write to device memory!\n");
+      printf("Test failed\n");
+      exit(1);
+  }
+    
+  // Set the arguments to our compute kernel
+  //
+  err   = clSetKernelArg(kernel, 0, sizeof(cl_mem), &edge_begin_buffer);
+  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &edge_end_buffer);
+  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &dst_buffer);
+  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &starting_node);
+  err  |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &level_buffer);
+  err  |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &level_counts_buffer);
+  if (err != CL_SUCCESS)
+  {
+    printf("Error: Failed to set kernel arguments! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
+
+  // Execute the kernel over the entire range of our 1d input data set
+  // using the maximum number of work group items for this device
+  //
+
+#ifdef C_KERNEL
+  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#else
+  printf("Error: OpenCL kernel is not currently supported!\n");
+  exit(1);
+#endif
+  if (err)
+  {
+    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
+
+  // Read back the results from the device to verify the output
+  //
+  err = clEnqueueReadBuffer( commands, level_buffer, CL_TRUE, 0, sizeof(args->level), args->level, 0, NULL, NULL );  
+  err |= clEnqueueReadBuffer( commands, level_counts_buffer, CL_TRUE, 0, sizeof(args->level_counts), args->level_counts, 0, NULL, NULL );  
+  if (err != CL_SUCCESS)
+  {
+    printf("Error: Failed to read output array! %d\n", err);
+    printf("Test failed\n");
+    exit(1);
+  }
 }
 
 /* Input format:

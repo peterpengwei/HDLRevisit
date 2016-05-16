@@ -8,7 +8,7 @@ In Proceedings of the 3rd Workshop on General-Purpose Computation on Graphics Pr
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "support.h"
+#include <inttypes.h>
 
 #define TYPE int32_t
 #define TYPE_MAX INT32_MAX
@@ -32,6 +32,6 @@ void ss_sort(int a[SIZE], int b[SIZE], int bucket[BUCKETSIZE], int sum[SCAN_RADI
 struct bench_args_t {
   int a[SIZE];
   int b[SIZE];
-  int bucket[BUCKETSIZE];
+  int bucket[BUCKETSIZE+1];
   int sum[SCAN_RADIX];
 };
