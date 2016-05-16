@@ -55,3 +55,55 @@ void md( int n_points[blockSide][blockSide][blockSide],
   }}} // loop_grid1_*
   }}} // loop_grid0_*
 }
+
+void workload( TYPE force_x[blockSide][blockSide][blockSide][densityFactor],
+	       TYPE force_y[blockSide][blockSide][blockSide][densityFactor],
+	       TYPE force_z[blockSide][blockSide][blockSide][densityFactor],
+	       TYPE position_x[blockSide][blockSide][blockSide][densityFactor],
+	       TYPE position_y[blockSide][blockSide][blockSide][densityFactor],
+	       TYPE position_z[blockSide][blockSide][blockSide][densityFactor],
+		int n_points[blockSide][blockSide][blockSide]) {
+#pragma HLS INTERFACE m_axi port=force_x offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=force_y offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=force_z offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_x offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_y offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=position_z offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=n_points offset=slave bundle=gmem2
+#pragma HLS INTERFACE s_axilite port=force_x bundle=control
+#pragma HLS INTERFACE s_axilite port=force_y bundle=control
+#pragma HLS INTERFACE s_axilite port=force_z bundle=control
+#pragma HLS INTERFACE s_axilite port=position_x bundle=control
+#pragma HLS INTERFACE s_axilite port=position_y bundle=control
+#pragma HLS INTERFACE s_axilite port=position_z bundle=control
+#pragma HLS INTERFACE s_axilite port=n_points bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
+	dvector_t force[blockSide][blockSide][blockSide][densityFactor];
+	dvector_t position[blockSide][blockSide][blockSide][densityFactor];
+        int i,j,k,l;
+        for (i=0; i<blockSide; i++) 
+          for (j=0; j<blockSide; j++)
+            for (k=0; k<blockSide; k++)
+              for (l=0; l<densityFactor; l++)
+              {
+                force[i][j][k][l].x = force_x[i][j][k][l];
+                force[i][j][k][l].y = force_y[i][j][k][l];
+                force[i][j][k][l].z = force_z[i][j][k][l];
+                position[i][j][k][l].x = position_x[i][j][k][l];
+                position[i][j][k][l].y = position_y[i][j][k][l];
+                position[i][j][k][l].z = position_z[i][j][k][l];
+              }
+	md(n_points, force, position);
+        for (i=0; i<blockSide; i++) 
+          for (j=0; j<blockSide; j++)
+            for (k=0; k<blockSide; k++)
+              for (l=0; l<densityFactor; l++)
+              {
+                force_x[i][j][k][l] = force[i][j][k][l].x;
+                force_y[i][j][k][l] = force[i][j][k][l].y;
+                force_z[i][j][k][l] = force[i][j][k][l].z;
+                position_x[i][j][k][l] = position[i][j][k][l].x;
+                position_y[i][j][k][l] = position[i][j][k][l].y;
+                position_z[i][j][k][l] = position[i][j][k][l].z;
+              }
+}
