@@ -1,48 +1,55 @@
 // The common host program for all kernels
 
-#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <CL/opencl.h>
+// ACL specific includes
+#include "CL/opencl.h"
+//#include "ACLHostUtils.h"
+#include "AOCLUtils/aocl_utils.h"
+using namespace aocl_utils;
 
 #define WRITE_OUTPUT
 #define CHECK_OUTPUT
 
 #include "support.h"
 
-int
-load_file_to_memory(const char *filename, char **result)
-{ 
-  size_t size = 0;
-  FILE *f = fopen(filename, "rb");
-  if (f == NULL) 
-  { 
-    *result = NULL;
-    return -1; // -1 means file opening fail 
-  } 
-  fseek(f, 0, SEEK_END);
-  size = ftell(f);
-  fseek(f, 0, SEEK_SET);
-  *result = (char *)malloc(size+1);
-  if (size != fread(*result, sizeof(char), size, f)) 
-  { 
-    free(*result);
-    return -2; // -2 means file reading fail 
-  } 
-  fclose(f);
-  (*result)[size] = 0;
-  return size;
+static const char *kernel_name =  "workload";
+
+// ACL runtime configuration
+static cl_platform_id platform;
+static cl_device_id device;
+static cl_context context;
+static cl_command_commands commands;
+static cl_kernel kernel;
+
+static cl_program program;
+static cl_int status;
+
+static void dump_error(const char *str, cl_int status) {
+  printf("%s\n", str);
+  printf("Error code: %d\n", status);
 }
 
-int main(int argc, char **argv)
-{
+// free the resources allocated during initialization
+static void freeResources() {
+
+  if(kernel) 
+    clReleaseKernel(kernel);  
+  if(program) 
+    clReleaseProgram(program);
+  if(commands) 
+    clReleaseCommandQueue(commands);
+  if(context) 
+    clReleaseContext(context);
+
+}
+void cleanup() {
+
+}
+int main(int argc, char *argv[]) {
   // Parse command line.
   char *in_file;
   #ifdef CHECK_OUTPUT
@@ -60,128 +67,78 @@ int main(int argc, char **argv)
     check_file = argv[2];
   #endif
 
-  // Initialize OpenCL-related variables
+  cl_uint num_platforms;
+  cl_uint num_devices;
 
-  cl_platform_id platform_id;         // platform id
-  cl_device_id device_id;             // compute device id 
-  cl_context context;                 // compute context
-  cl_command_queue commands;          // compute command queue
-  cl_program program;                 // compute program
-  cl_kernel kernel;                   // compute kernel
-   
-  char cl_platform_vendor[1001];
-  char cl_platform_name[1001];
+  // get the platform ID
+  status = clGetPlatformIDs(1, &platform, &num_platforms);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clGetPlatformIDs.", status);
+    freeResources();
+    return 1;
+  }
+  if(num_platforms != 1) {
+    printf("Found %d platforms!\n", num_platforms);
+    freeResources();
+    return 1;
+  }
 
-  int err;
+  // get the device ID
+  status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 1, &device, &num_devices);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clGetDeviceIDs.", status);
+    freeResources();
+    return 1;
+  }
+  if(num_devices != 1) {
+    printf("Found %d devices!\n", num_devices);
+    freeResources();
+    return 1;
+  }
 
-  err = clGetPlatformIDs(1,&platform_id,NULL);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to find an OpenCL platform!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
+  // create a context
+  context = clCreateContext(0, 1, &device, NULL, NULL, &status);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clCreateContext.", status);
+    freeResources();
+    return 1;
   }
-  err = clGetPlatformInfo(platform_id,CL_PLATFORM_VENDOR,1000,(void *)cl_platform_vendor,NULL);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: clGetPlatformInfo(CL_PLATFORM_VENDOR) failed!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-  printf("CL_PLATFORM_VENDOR %s\n",cl_platform_vendor);
-  err = clGetPlatformInfo(platform_id,CL_PLATFORM_NAME,1000,(void *)cl_platform_name,NULL);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: clGetPlatformInfo(CL_PLATFORM_NAME) failed!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-  printf("CL_PLATFORM_NAME %s\n",cl_platform_name);
- 
-  // Connect to a compute device
-  int fpga = 0;
-#if defined (FPGA_DEVICE)
-  fpga = 1;
-#endif
-  err = clGetDeviceIDs(platform_id, fpga ? CL_DEVICE_TYPE_ACCELERATOR : CL_DEVICE_TYPE_CPU,
-                       1, &device_id, NULL);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to create a device group!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
+    
+  // create a command queue
+  commands = clCreateCommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE, &status);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clCreateCommandQueue.", status);
+    freeResources();
+    return 1;
   }
   
-  // Create a compute context 
-  //
-  context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-  if (!context)
-  {
-    printf("Error: Failed to create a compute context!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
+  // create the program
+  size_t kernel_name_length = strlen(kernel_name);
+  cl_int kernel_status;
+  program = clCreateProgramWithBinary(context, 1, &device, &kernel_name_length, (const unsigned char**)&kernel_name, &kernel_status, &status);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clCreateProgramWithBinary.", status);
+    freeResources();
+    return 1;
   }
 
-  // Create a command commands
-  //
-  commands = clCreateCommandQueue(context, device_id, 0, &err);
-  if (!commands)
-  {
-    printf("Error: Failed to create a command commands!\n");
-    printf("Error: code %i\n",err);
-    printf("Test failed\n");
-    return EXIT_FAILURE;
+  // build the program
+  status = clBuildProgram(program, 0, NULL, "", NULL, NULL);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clBuildProgram.", status);
+    freeResources();
+    return 1;
   }
 
-  int status;
-
-  // Create Program Objects
-  //
+  int failures = 0;
+  int successes = 0;
+  // create the kernel
+  kernel = clCreateKernel(program, "workload", &status);
   
-  // Load binary from disk
-  unsigned char *kernelbinary;
-  // The forth parameter specifies the name of the kernel binary
-  char *xclbin=argv[3];
-  printf("loading %s\n", xclbin);
-  int n_i = load_file_to_memory(xclbin, (char **) &kernelbinary);
-  if (n_i < 0) {
-    printf("failed to load kernel from xclbin: %s\n", xclbin);
-    printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-  size_t n = n_i;
-  // Create the compute program from offline
-  program = clCreateProgramWithBinary(context, 1, &device_id, &n,
-                                      (const unsigned char **) &kernelbinary, &status, &err);
-  if ((!program) || (err!=CL_SUCCESS)) {
-    printf("Error: Failed to create compute program from binary %d!\n", err);
-    printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-
-  // Build the program executable
-  //
-  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-    size_t len;
-    char buffer[2048];
-
-    printf("Error: Failed to build program executable!\n");
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
-    printf("%s\n", buffer);
-    printf("Test failed\n");
-    return EXIT_FAILURE;
-  }
-
-  // Create the compute kernel in the program we wish to run
-  //
-  kernel = clCreateKernel(program, "workload", &err);
-  if (!kernel || err != CL_SUCCESS)
-  {
-    printf("Error: Failed to create compute kernel!\n");
-    printf("Test failed\n");
-    return EXIT_FAILURE;
+  if(status != CL_SUCCESS) {
+    dump_error("Failed clCreateKernel.", status);
+    freeResources();
+    return 1;
   }
 
   // Load input data
@@ -222,14 +179,10 @@ int main(int argc, char **argv)
     return -1;
   }
   #endif
-
-  // Shutdown and cleanup
-  //
-  clReleaseProgram(program);
-  clReleaseKernel(kernel);
-  clReleaseCommandQueue(commands);
-  clReleaseContext(context);
+  
+  freeResources();
 
   printf("Success.\n");
+
   return 0;
 }

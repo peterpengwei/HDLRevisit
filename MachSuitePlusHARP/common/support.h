@@ -1,14 +1,14 @@
-#include <fcntl.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <CL/opencl.h>
+// ACL specific includes
+#include "CL/opencl.h"
+//#include "ACLHostUtils.h"
+#include "AOCLUtils/aocl_utils.h"
+
+// using namespace aocl_utils;
 
 ///// File and section functions
 char *readfile(int fd);
