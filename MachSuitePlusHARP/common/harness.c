@@ -1,4 +1,9 @@
 // The common host program for all kernels
+#include <fcntl.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -22,16 +27,11 @@ static const char *kernel_name =  "workload";
 static cl_platform_id platform;
 static cl_device_id device;
 static cl_context context;
-static cl_command_commands commands;
+static cl_command_queue commands;
 static cl_kernel kernel;
 
 static cl_program program;
 static cl_int status;
-
-static void dump_error(const char *str, cl_int status) {
-  printf("%s\n", str);
-  printf("Error code: %d\n", status);
-}
 
 // free the resources allocated during initialization
 static void freeResources() {

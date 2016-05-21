@@ -1,6 +1,4 @@
 //Standard Libraries
-#include <stdio.h>
-#include <stdlib.h>
 
 //Define compute data type
 #define TYPE double
@@ -17,7 +15,7 @@
 //Set number of iterations to execute
 #define MAX_ITERATION 1
 
-void gemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
+// void gemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
 ////////////////////////////////////////////////////////////////////////////////
 // Test harness interface code.
 

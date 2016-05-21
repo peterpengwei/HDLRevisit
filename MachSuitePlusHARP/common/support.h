@@ -10,6 +10,11 @@
 
 // using namespace aocl_utils;
 
+static void dump_error(const char *str, cl_int status) {
+  printf("%s\n", str);
+  printf("Error code: %d\n", status);
+}
+
 ///// File and section functions
 char *readfile(int fd);
 char *find_section_start(char *s, int n);

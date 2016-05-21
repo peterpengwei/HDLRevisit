@@ -1,11 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <inttypes.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <math.h>
+//#include <inttypes.h>
 
 #define SIZE 2048
-#define TYPE int32_t
-#define TYPE_MAX INT32_MAX
+#define TYPE int
+//#define TYPE int32_t
+#define TYPE_MAX 0x7fffffffL
 
 void ms_mergesort(TYPE a[SIZE]);
 

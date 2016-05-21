@@ -20,7 +20,7 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   status = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)a_buffer);
   if(status != CL_SUCCESS) {
     dump_error("Failed set args.", status);
-    return 1;
+    exit(1);
   }
 
   // Execute the kernel over the entire range of our 1d input data set

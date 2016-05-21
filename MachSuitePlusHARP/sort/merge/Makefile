@@ -57,7 +57,7 @@ INC_DIRS := . ../../common ../../common/inc
 INC_FILES := $(foreach D,$(INC_DIRS),$(wildcard $D/*.h))
 
 # Source files.
-SRCS := $(wildcard ../../common/src/AOCLUtils/*.cpp) $(wildcard local_support.cpp) $(wildcard ../../common/support.c) $(wildcard ../../common/harness.c)
+SRCS := $(wildcard ../../common/src/AOCLUtils/*.cpp) $(wildcard local_support.c) $(wildcard ../../common/support.c) $(wildcard ../../common/harness.c)
 
 # Libraries.
 LIBS :=
