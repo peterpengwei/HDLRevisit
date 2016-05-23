@@ -6,45 +6,36 @@ int INPUT_SIZE = sizeof(struct bench_args_t);
 
 #define EPSILON ((double)1.0e-6)
 
-void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
+void run_benchmark( void *vargs, cl_context& context, 
+  cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem real_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->real), NULL, NULL);
-  cl_mem img_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->img), NULL, NULL);
-  cl_mem real_twid_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->real_twid), NULL, NULL);
-  cl_mem img_twid_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->img_twid), NULL, NULL);
-  if (!real_buffer || !img_buffer || !real_twid_buffer || !img_twid_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned * real_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->real), 1024);
+  static unsigned * img_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->img), 1024);
+  static unsigned * real_twid_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->real_twid), 1024);
+  static unsigned * img_twid_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->img_twid), 1024);
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, real_buffer, CL_TRUE, 0, sizeof(args->real), args->real, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, img_buffer, CL_TRUE, 0, sizeof(args->img), args->img, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, real_twid_buffer, CL_TRUE, 0, sizeof(args->real_twid), args->real_twid, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, img_twid_buffer, CL_TRUE, 0, sizeof(args->img_twid), args->img_twid, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
-    
+  memcpy(real_buffer, args->real, sizeof(args->real));
+  memcpy(img_buffer, args->img, sizeof(args->img));
+  memcpy(real_twid_buffer, args->real_twid, sizeof(args->real_twid));
+  memcpy(img_twid_buffer, args->img_twid, sizeof(args->img_twid));
+
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &real_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &img_buffer);
-  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &real_twid_buffer);
-  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &img_twid_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status  = clSetKernalArgSVMPointerAltera(kernel, 0, (void*)real_buffer);
+  status |= clSetKernalArgSVMPointerAltera(kernel, 1, (void*)img_buffer);
+  status |= clSetKernalArgSVMPointerAltera(kernel, 2, (void*)real_twid_buffer);
+  status |= clSetKernalArgSVMPointerAltera(kernel, 3, (void*)img_twid_buffer);
+  if (status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
@@ -52,29 +43,24 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // using the maximum number of work group items for this device
   //
 
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
     printf("Error: Failed to execute kernel! %d\n", err);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, real_buffer, CL_TRUE, 0, sizeof(args->real), args->real, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, img_buffer, CL_TRUE, 0, sizeof(args->img), args->img, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->real, real_buffer, sizeof(args->real));
+  memcpy(args->img, img_buffer, sizeof(args->img));
 }
 
 /* Input format:

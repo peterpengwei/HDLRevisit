@@ -5,9 +5,6 @@ M. D. Lam, E. E. Rothberg, and M. E. Wolf
 ASPLOS 1991
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 //Data Type
 #define TYPE double
 
@@ -25,7 +22,7 @@ ASPLOS 1991
 //Set number of iterations to execute
 #define MAX_ITERATION 1
 
-void bbgemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
+// void bbgemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
 ////////////////////////////////////////////////////////////////////////////////
 // Test harness interface code.
 
