@@ -8,39 +8,25 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem seqA_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->seqA), NULL, NULL);
-  cl_mem seqB_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->seqB), NULL, NULL);
-  cl_mem alignedA_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->alignedA), NULL, NULL);
-  cl_mem alignedB_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->alignedB), NULL, NULL);
-  if (!seqA_buffer || !seqB_buffer || !alignedA_buffer || !alignedB_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned *seqA_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->seqA), 1024); 
+  static unsigned *seqB_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->seqB), 1024); 
+  static unsigned *alignedA_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->alignedA), 1024); 
+  static unsigned *alignedB_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->alignedB), 1024); 
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, seqA_buffer, CL_TRUE, 0, sizeof(args->seqA), args->seqA, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, seqB_buffer, CL_TRUE, 0, sizeof(args->seqB), args->seqB, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
+  memcpy(seqA_buffer, args->seqA, sizeof(args->seqA));
+  memcpy(seqB_buffer, args->seqB, sizeof(args->seqB));
     
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &seqA_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &seqB_buffer);
-  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &alignedA_buffer);
-  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &alignedB_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)seqA_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)seqB_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)alignedA_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 3, (void*)alignedB_buffer);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
@@ -48,29 +34,24 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // using the maximum number of work group items for this device
   //
 
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, alignedA_buffer, CL_TRUE, 0, sizeof(args->alignedA), args->alignedA, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, alignedB_buffer, CL_TRUE, 0, sizeof(args->alignedB), args->alignedB, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->alignedA, alignedA_buffer, sizeof(args->alignedA));
+  memcpy(args->alignedB, alignedB_buffer, sizeof(args->alignedB));
 }
 
 /* Input format:

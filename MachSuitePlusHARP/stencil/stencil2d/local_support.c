@@ -10,37 +10,23 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem orig_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->orig), NULL, NULL);
-  cl_mem sol_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->sol), NULL, NULL);
-  cl_mem filter_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->filter), NULL, NULL);
-  if (!orig_buffer || !sol_buffer || !filter_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned *orig_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->orig), 1024); 
+  static unsigned *sol_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->sol), 1024); 
+  static unsigned *filter_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->filter), 1024); 
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, orig_buffer, CL_TRUE, 0, sizeof(args->orig), args->orig, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, filter_buffer, CL_TRUE, 0, sizeof(args->filter), args->filter, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
+  memcpy(orig_buffer, args->orig, sizeof(args->orig));
+  memcpy(filter_buffer, args->filter, sizeof(args->filter));
     
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &orig_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &sol_buffer);
-  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &filter_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)orig_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)sol_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)filter_buffer);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
@@ -48,28 +34,23 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // using the maximum number of work group items for this device
   //
 
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, sol_buffer, CL_TRUE, 0, sizeof(args->sol), args->sol, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->sol, sol_buffer, sizeof(args->sol));
 }
 
 /* Input format:

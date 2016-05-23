@@ -5,16 +5,13 @@ K. Datta, M. Murphy, V. Volkov, S. Williams, J. Carter, L. Oliker, D. Patterson,
 SC 2008
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <inttypes.h>
 
 //Define input sizes
 #define height_size 32
 #define col_size 32
 #define row_size 16
 //Data Bounds
-#define TYPE int32_t
+#define TYPE int
 #define MAX 1000
 #define MIN 1
 //Convenience Macros

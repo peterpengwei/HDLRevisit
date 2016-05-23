@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 
 #define ALEN 128
 #define BLEN 128
