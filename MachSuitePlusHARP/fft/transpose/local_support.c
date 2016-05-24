@@ -6,69 +6,52 @@ int INPUT_SIZE = sizeof(struct bench_args_t);
 
 #define EPSILON ((TYPE)1.0e-6)
 
-void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
+void run_benchmark( void *vargs, cl_context& context, 
+  cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem work_x_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->work_x), NULL, NULL);
-  cl_mem work_y_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->work_y), NULL, NULL);
-  if (!work_x_buffer || !work_y_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned * work_x_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->work_x), 1024);
+  static unsigned * work_y_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->work_y), 1024);
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, work_x_buffer, CL_TRUE, 0, sizeof(args->work_x), args->work_x, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, work_y_buffer, CL_TRUE, 0, sizeof(args->work_y), args->work_y, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
-    
+  memcpy(work_x_buffer, args->work_x, sizeof(args->work_x));
+  memcpy(work_y_buffer, args->work_y, sizeof(args->work_y));
+
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &work_x_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &work_y_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status  = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)work_x_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)work_y_buffer);
+  if (status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
   // Execute the kernel over the entire range of our 1d input data set
   // using the maximum number of work group items for this device
   //
-
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, work_x_buffer, CL_TRUE, 0, sizeof(args->work_x), args->work_x, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, work_y_buffer, CL_TRUE, 0, sizeof(args->work_y), args->work_y, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->work_x, work_x_buffer, sizeof(args->work_x));
+  memcpy(args->work_y, work_y_buffer, sizeof(args->work_y));
 }
 
 /* Input format:

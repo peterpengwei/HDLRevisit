@@ -4,10 +4,7 @@ Harish and Narayanan. "Accelerating large graph algorithms on the GPU using CUDA
 Hong, Oguntebi, Olukotun. "Efficient Parallel Graph Exploration on Multi-Core CPU and GPU." PACT, 2011.
 */
 
-#include <stdlib.h>
-#include <inttypes.h>
-#include <stdio.h>
-#include <string.h>
+// #include <stdint.h>
 
 // Terminology (but not values) from graph500 spec
 //   graph density = 2^-(2*SCALE - EDGE_FACTOR)
@@ -19,11 +16,13 @@ Hong, Oguntebi, Olukotun. "Efficient Parallel Graph Exploration on Multi-Core CP
 
 // upper limit
 #define N_LEVELS 10
-#define INT8_MAX 0x7f
+// #define INT8_MAX 0x7f
 
 // Larger than necessary for small graphs, but appropriate for large ones
-typedef uint64_t edge_index_t;
-typedef uint64_t node_index_t;
+// typedef uint64_t edge_index_t;
+// typedef uint64_t node_index_t;
+typedef unsigned long long edge_index_t;
+typedef unsigned long long node_index_t;
 
 typedef struct edge_t_struct {
   // These fields are common in practice, but we elect not to use them.
@@ -37,7 +36,8 @@ typedef struct node_t_struct {
   edge_index_t edge_end;
 } node_t;
 
-typedef int8_t level_t;
+// typedef int8_t level_t;
+typedef char level_t;
 #define MAX_LEVEL 0x7f
 
 ////////////////////////////////////////////////////////////////////////////////

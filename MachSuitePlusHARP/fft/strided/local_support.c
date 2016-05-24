@@ -30,10 +30,10 @@ void run_benchmark( void *vargs, cl_context& context,
   // Set the arguments to our compute kernel
   //
   int status;
-  status  = clSetKernalArgSVMPointerAltera(kernel, 0, (void*)real_buffer);
-  status |= clSetKernalArgSVMPointerAltera(kernel, 1, (void*)img_buffer);
-  status |= clSetKernalArgSVMPointerAltera(kernel, 2, (void*)real_twid_buffer);
-  status |= clSetKernalArgSVMPointerAltera(kernel, 3, (void*)img_twid_buffer);
+  status  = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)real_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)img_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)real_twid_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 3, (void*)img_twid_buffer);
   if (status != CL_SUCCESS) {
     dump_error("Failed set args.", status);
     exit(1);
@@ -51,7 +51,7 @@ void run_benchmark( void *vargs, cl_context& context,
 #endif
   if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
