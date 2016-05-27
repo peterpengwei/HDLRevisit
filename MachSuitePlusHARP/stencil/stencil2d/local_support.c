@@ -17,6 +17,7 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // Write our data set into device buffers  
   //
   memcpy(orig_buffer, args->orig, sizeof(args->orig));
+  memcpy(sol_buffer, args->sol, sizeof(args->sol));
   memcpy(filter_buffer, args->filter, sizeof(args->filter));
     
   // Set the arguments to our compute kernel
@@ -51,6 +52,12 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // Read back the results from the device to verify the output
   //
   memcpy(args->sol, sol_buffer, sizeof(args->sol));
+  printf("size of buffer is: %d\n", sizeof(args->sol));
+  int i;
+  for (i = 0; i < row_size * col_size; i++) {
+    printf("sol_buffer[%d] = %x\n", i, sol_buffer[i]);
+    printf("args->sol[%d] = %x\n", i, args->sol[i]);
+  }
 }
 
 /* Input format:

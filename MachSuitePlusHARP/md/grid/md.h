@@ -1,7 +1,3 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
 
 #define TYPE double
 
@@ -24,10 +20,10 @@ typedef struct {
   TYPE x, y, z;
 } dvector_t;
 typedef struct {
-  int32_t x, y, z;
+  int x, y, z;
 } ivector_t;
 
-void md( int32_t n_points[blockSide][blockSide][blockSide],
+void md( int n_points[blockSide][blockSide][blockSide],
          dvector_t force[blockSide][blockSide][blockSide][densityFactor],
          dvector_t position[blockSide][blockSide][blockSide][densityFactor]
        );
@@ -35,7 +31,7 @@ void md( int32_t n_points[blockSide][blockSide][blockSide],
 // Test harness interface code.
 
 struct bench_args_t {
-  int32_t n_points[blockSide][blockSide][blockSide];
+  int n_points[blockSide][blockSide][blockSide];
   dvector_t force[blockSide][blockSide][blockSide][densityFactor];
   dvector_t position[blockSide][blockSide][blockSide][densityFactor];
 };

@@ -5,9 +5,12 @@ http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1
 
 
 // These constants valid for the IEEE 494 bus interconnect matrix
-#define NNZ 1666
+// #define NNZ 1666
 #define N 494
 #define L 10
+
+// #define N 64
+// #define L 4
 
 #define TYPE double
 
