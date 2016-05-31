@@ -50,10 +50,3 @@ struct bench_args_t {
   level_t level[N_NODES];
   edge_index_t level_counts[N_LEVELS];
 };
-
-
-void bfs(edge_index_t edge_begin[N_NODES], edge_index_t edge_end[N_NODES],
-	 node_index_t dst[N_EDGES],
-         node_index_t starting_node,
-	 level_t level[N_NODES],
-         edge_index_t level_counts[N_LEVELS]);

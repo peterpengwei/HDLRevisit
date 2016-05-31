@@ -15,7 +15,7 @@ __attribute__((task))
 workload( __global edge_index_t * restrict edge_begin, 
           __global edge_index_t * restrict edge_end,
           __global node_index_t * restrict dst,
-          node_index_t starting_node,
+          const node_index_t starting_node,
           __global level_t * restrict level,
           __global edge_index_t * restrict level_counts) {
   node_index_t queue[N_NODES];

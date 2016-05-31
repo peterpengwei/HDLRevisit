@@ -25,8 +25,6 @@ void run_benchmark( void *vargs, cl_context& context,
     (unsigned int*)clSVMAllocAltera(context, 0, sizeof(edge_end), 1024);
   static unsigned * dst_buffer = 
     (unsigned int*)clSVMAllocAltera(context, 0, sizeof(dst), 1024);
-  static unsigned * starting_node = 
-    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(node_index_t), 1024);
   static unsigned * level_buffer = 
     (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->level), 1024);
   static unsigned * level_counts_buffer = 
@@ -37,9 +35,9 @@ void run_benchmark( void *vargs, cl_context& context,
   memcpy(edge_begin_buffer, edge_begin, sizeof(edge_begin));
   memcpy(edge_end_buffer, edge_end, sizeof(edge_end));
   memcpy(dst_buffer, dst, sizeof(dst));
-  memcpy(starting_node, &(args->starting_node), sizeof(node_index_t));
   memcpy(level_buffer, args->level, sizeof(args->level));
   memcpy(level_counts_buffer, args->level_counts, sizeof(args->level_counts));
+  node_index_t starting_node = args->starting_node;
     
   // Set the arguments to our compute kernel
   //
@@ -47,7 +45,7 @@ void run_benchmark( void *vargs, cl_context& context,
   status  = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)edge_begin_buffer);
   status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)edge_end_buffer);
   status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)dst_buffer);
-  status |= clSetKernelArgSVMPointerAltera(kernel, 3, (void*)starting_node);
+  status |= clSetKernelArg(kernel, 3, sizeof(node_index_t), &starting_node);
   status |= clSetKernelArgSVMPointerAltera(kernel, 4, (void*)level_buffer);
   status |= clSetKernelArgSVMPointerAltera(kernel, 5, (void*)level_counts_buffer);
   if (status != CL_SUCCESS) {
@@ -104,7 +102,7 @@ void input_to_data(int fd, void *vdata) {
   p = readfile(fd);
   // Section 1: starting node
   s = find_section_start(p,1);
-  parse_uint64_t_array(s, &data->starting_node, 1);
+  parse_uint64_t_array(s, (uint64_t *)(&data->starting_node), 1);
 
   // Section 2: node structures
   s = find_section_start(p,2);
@@ -127,7 +125,7 @@ void data_to_input(int fd, void *vdata) {
   struct bench_args_t *data = (struct bench_args_t *)vdata;
   // Section 1: starting node
   write_section_header(fd);
-  write_uint64_t_array(fd, &data->starting_node, 1);
+  write_uint64_t_array(fd, (uint64_t *)(&data->starting_node), 1);
   // Section 2: node structures
   write_section_header(fd);
   nodes = (uint64_t *)malloc(N_NODES*2*sizeof(uint64_t));
@@ -139,7 +137,7 @@ void data_to_input(int fd, void *vdata) {
   free(nodes);
   // Section 3: edge structures
   write_section_header(fd);
-  write_uint64_t_array(fd, (uint64_t *)(&data->edges), N_EDGES);
+  write_uint64_t_array(fd, (uint64_t *)(data->edges), N_EDGES);
 }
 
 /* Output format:
@@ -156,14 +154,14 @@ void output_to_data(int fd, void *vdata) {
   p = readfile(fd);
   // Section 1: horizon counts
   s = find_section_start(p,1);
-  parse_uint64_t_array(s, data->level_counts, N_LEVELS);
+  parse_uint64_t_array(s, (uint64_t *)(data->level_counts), N_LEVELS);
 }
 
 void data_to_output(int fd, void *vdata) {
   struct bench_args_t *data = (struct bench_args_t *)vdata;
   // Section 1
   write_section_header(fd);
-  write_uint64_t_array(fd, data->level_counts, N_LEVELS);
+  write_uint64_t_array(fd, (uint64_t *)(data->level_counts), N_LEVELS);
 }
 
 int check_data( void *vdata, void *vref ) {
