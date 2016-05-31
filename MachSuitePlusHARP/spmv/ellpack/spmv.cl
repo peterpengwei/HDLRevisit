@@ -7,7 +7,7 @@ http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1
 
 __kernel void 
 __attribute__((task))
-workload( __global TYPE * restrict nzval, __global int * restrict cols, __global TYPE * restrict vec, __global TYPE * restrict out){
+workload( __global TYPE * nzval, __global int * cols, __global TYPE * vec, __global TYPE * out){
     int i, j;
     TYPE Si;
 

@@ -9,7 +9,7 @@ SC 2008
 
 __kernel void 
 __attribute__((task))
-workload ( __global TYPE * restrict C, __global TYPE * restrict orig, __global TYPE * restrict sol ){
+workload ( __global TYPE * C, __global TYPE * orig, __global TYPE * sol ){
     int i, j, k;
     TYPE sum0, sum1, mul0, mul1;
 

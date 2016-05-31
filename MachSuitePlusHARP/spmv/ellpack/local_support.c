@@ -4,7 +4,7 @@
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
-#define EPSILON 1.0e-6
+#define EPSILON 1.0e-5
 
 void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;

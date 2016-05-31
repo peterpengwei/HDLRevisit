@@ -10,50 +10,36 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem force_x_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->force_x), NULL, NULL);
-  cl_mem force_y_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->force_y), NULL, NULL);
-  cl_mem force_z_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->force_z), NULL, NULL);
-  cl_mem position_x_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->position_x), NULL, NULL);
-  cl_mem position_y_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->position_y), NULL, NULL);
-  cl_mem position_z_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->position_z), NULL, NULL);
-  cl_mem NL_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->NL), NULL, NULL);
-  if (!force_x_buffer || !force_y_buffer || !force_z_buffer || !position_x_buffer || !position_y_buffer || !position_z_buffer || !NL_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned *force_x_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->force_x), 1024); 
+  static unsigned *force_y_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->force_y), 1024); 
+  static unsigned *force_z_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->force_z), 1024); 
+  static unsigned *position_x_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->position_x), 1024); 
+  static unsigned *position_y_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->position_y), 1024); 
+  static unsigned *position_z_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->position_z), 1024); 
+  static unsigned *NL_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->NL), 1024); 
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, force_x_buffer, CL_TRUE, 0, sizeof(args->force_x), args->force_x, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, force_y_buffer, CL_TRUE, 0, sizeof(args->force_y), args->force_y, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, force_z_buffer, CL_TRUE, 0, sizeof(args->force_z), args->force_z, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_x_buffer, CL_TRUE, 0, sizeof(args->position_x), args->position_x, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_y_buffer, CL_TRUE, 0, sizeof(args->position_y), args->position_y, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_z_buffer, CL_TRUE, 0, sizeof(args->position_z), args->position_z, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, NL_buffer, CL_TRUE, 0, sizeof(args->NL), args->NL, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
+  memcpy(force_x_buffer, args->force_x, sizeof(args->force_x));
+  memcpy(force_y_buffer, args->force_y, sizeof(args->force_y));
+  memcpy(force_z_buffer, args->force_z, sizeof(args->force_z));
+  memcpy(position_x_buffer, args->position_x, sizeof(args->position_x));
+  memcpy(position_y_buffer, args->position_y, sizeof(args->position_y));
+  memcpy(position_z_buffer, args->position_z, sizeof(args->position_z));
+  memcpy(NL_buffer, args->NL, sizeof(args->NL));
     
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &force_x_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &force_y_buffer);
-  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &force_z_buffer);
-  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &position_x_buffer);
-  err  |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &position_y_buffer);
-  err  |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &position_z_buffer);
-  err  |= clSetKernelArg(kernel, 6, sizeof(cl_mem), &NL_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)force_x_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)force_y_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)force_z_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 3, (void*)position_x_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 4, (void*)position_y_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 5, (void*)position_z_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 6, (void*)NL_buffer);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
@@ -61,30 +47,25 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // using the maximum number of work group items for this device
   //
 
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, force_x_buffer, CL_TRUE, 0, sizeof(args->force_x), args->force_x, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, force_y_buffer, CL_TRUE, 0, sizeof(args->force_y), args->force_y, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, force_z_buffer, CL_TRUE, 0, sizeof(args->force_z), args->force_z, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->force_x, force_x_buffer, sizeof(args->force_x));
+  memcpy(args->force_y, force_y_buffer, sizeof(args->force_y));
+  memcpy(args->force_z, force_z_buffer, sizeof(args->force_z));
 }
 
 /* Input format:

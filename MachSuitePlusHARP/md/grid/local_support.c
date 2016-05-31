@@ -29,50 +29,36 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
         }
   // Create device buffers
   //
-  cl_mem force_x_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(force_x), NULL, NULL);
-  cl_mem force_y_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(force_y), NULL, NULL);
-  cl_mem force_z_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(force_z), NULL, NULL);
-  cl_mem position_x_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(position_x), NULL, NULL);
-  cl_mem position_y_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(position_y), NULL, NULL);
-  cl_mem position_z_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(position_z), NULL, NULL);
-  cl_mem n_points_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->n_points), NULL, NULL);
-  if (!force_x_buffer || !force_y_buffer || !force_z_buffer || !position_x_buffer || !position_y_buffer || !position_z_buffer || !n_points_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned *force_x_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(force_x), 1024); 
+  static unsigned *force_y_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(force_y), 1024); 
+  static unsigned *force_z_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(force_z), 1024); 
+  static unsigned *position_x_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(position_x), 1024); 
+  static unsigned *position_y_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(position_y), 1024); 
+  static unsigned *position_z_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(position_z), 1024); 
+  static unsigned *n_points_buffer = (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->n_points), 1024); 
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, force_x_buffer, CL_TRUE, 0, sizeof(force_x), force_x, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, force_y_buffer, CL_TRUE, 0, sizeof(force_y), force_y, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, force_z_buffer, CL_TRUE, 0, sizeof(force_z), force_z, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_x_buffer, CL_TRUE, 0, sizeof(position_x), position_x, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_y_buffer, CL_TRUE, 0, sizeof(position_y), position_y, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, position_z_buffer, CL_TRUE, 0, sizeof(position_z), position_z, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, n_points_buffer, CL_TRUE, 0, sizeof(args->n_points), args->n_points, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
+  memcpy(force_x_buffer, force_x, sizeof(force_x));
+  memcpy(force_y_buffer, force_y, sizeof(force_y));
+  memcpy(force_z_buffer, force_z, sizeof(force_z));
+  memcpy(position_x_buffer, position_x, sizeof(position_x));
+  memcpy(position_y_buffer, position_y, sizeof(position_y));
+  memcpy(position_z_buffer, position_z, sizeof(position_z));
+  memcpy(n_points_buffer, args->n_points, sizeof(args->n_points));
     
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &force_x_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &force_y_buffer);
-  err  |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &force_z_buffer);
-  err  |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &position_x_buffer);
-  err  |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &position_y_buffer);
-  err  |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &position_z_buffer);
-  err  |= clSetKernelArg(kernel, 6, sizeof(cl_mem), &n_points_buffer);
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+  int status;
+  status = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)force_x_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)force_y_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 2, (void*)force_z_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 3, (void*)position_x_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 4, (void*)position_y_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 5, (void*)position_z_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 6, (void*)n_points_buffer);
+  if(status != CL_SUCCESS) {
+    dump_error("Failed set args.", status);
     exit(1);
   }
 
@@ -80,30 +66,25 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // using the maximum number of work group items for this device
   //
 
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, force_x_buffer, CL_TRUE, 0, sizeof(force_x), force_x, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, force_y_buffer, CL_TRUE, 0, sizeof(force_y), force_y, 0, NULL, NULL );  
-  err |= clEnqueueReadBuffer( commands, force_z_buffer, CL_TRUE, 0, sizeof(force_z), force_z, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(force_x, force_x_buffer, sizeof(force_x));
+  memcpy(force_y, force_y_buffer, sizeof(force_y));
+  memcpy(force_z, force_z_buffer, sizeof(force_z));
   for (i=0; i<blockSide; i++) 
     for (j=0; j<blockSide; j++)
       for (k=0; k<blockSide; k++)

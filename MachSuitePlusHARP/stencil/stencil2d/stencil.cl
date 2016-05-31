@@ -2,7 +2,7 @@
 
 __kernel void 
 __attribute__((task))
-workload ( __global TYPE * restrict orig, __global TYPE * restrict sol, __global TYPE * restrict filter ){
+workload ( __global TYPE * orig, __global TYPE * sol, __global TYPE * filter ){
     int r, c, k1, k2;
     TYPE temp, mul;
 

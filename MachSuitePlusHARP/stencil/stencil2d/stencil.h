@@ -1,3 +1,4 @@
+#include <inttypes.h>
 
 //Define input sizes
 #define col_size 64
@@ -5,7 +6,7 @@
 #define f_size 9
 
 //Data Bounds
-#define TYPE int
+#define TYPE int32_t
 #define MAX 1000
 #define MIN 1
 

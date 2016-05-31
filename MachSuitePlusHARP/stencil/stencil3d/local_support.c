@@ -17,6 +17,7 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   // Write our data set into device buffers  
   //
   memcpy(orig_buffer, args->orig, sizeof(args->orig));
+  memcpy(sol_buffer, args->sol, sizeof(args->sol));
   memcpy(C_buffer, args->C, sizeof(args->C));
     
   // Set the arguments to our compute kernel
