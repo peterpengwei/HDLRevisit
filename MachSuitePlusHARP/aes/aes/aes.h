@@ -3,22 +3,19 @@
 *   All lookup tables replaced with 'on the fly' calculations.
 */
 
-#include <inttypes.h>
+// #include <inttypes.h>
 
 typedef struct {
-  uint8_t key[32];
-  uint8_t enckey[32];
-  uint8_t deckey[32];
+  unsigned char key[32];
+  unsigned char enckey[32];
+  unsigned char deckey[32];
 } aes256_context;
-
-void aes256_encrypt_ecb(aes256_context *ctx, uint8_t k[32], uint8_t buf[16]);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Test harness interface code.
 
 struct bench_args_t {
   aes256_context ctx;
-  uint8_t k[32];
-  uint8_t buf[16];
+  unsigned char k[32];
+  unsigned char buf[16];
 };
-

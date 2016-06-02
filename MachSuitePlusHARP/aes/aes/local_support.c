@@ -8,64 +8,47 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
   struct bench_args_t *args = (struct bench_args_t *)vargs;
   // Create device buffers
   //
-  cl_mem key_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->k), NULL, NULL);
-  cl_mem value_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->buf), NULL, NULL);
-  if (!key_buffer || !value_buffer)
-  {
-    printf("Error: Failed to allocate device memory!\n");
-    printf("Test failed\n");
-    exit(1);
-  }    
+  static unsigned * k_buffer =
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->k), 1024);
+  static unsigned * buf_buffer = 
+    (unsigned int*)clSVMAllocAltera(context, 0, sizeof(args->buf), 1024);
 
   // Write our data set into device buffers  
   //
-  int err;
-  err = clEnqueueWriteBuffer(commands, key_buffer, CL_TRUE, 0, sizeof(args->k), args->k, 0, NULL, NULL);
-  err |= clEnqueueWriteBuffer(commands, value_buffer, CL_TRUE, 0, sizeof(args->buf), args->buf, 0, NULL, NULL);
-  if (err != CL_SUCCESS)
-  {
-      printf("Error: Failed to write to device memory!\n");
-      printf("Test failed\n");
-      exit(1);
-  }
+  memcpy(k_buffer, args->k, sizeof(args->k));
+  memcpy(buf_buffer, args->buf, sizeof(args->buf));
     
   // Set the arguments to our compute kernel
   //
-  err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &key_buffer);
-  err  |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &value_buffer);
-  if (err != CL_SUCCESS)
+  int status;
+  status  = clSetKernelArgSVMPointerAltera(kernel, 0, (void*)k_buffer);
+  status |= clSetKernelArgSVMPointerAltera(kernel, 1, (void*)buf_buffer);
+  if (status != CL_SUCCESS)
   {
-    printf("Error: Failed to set kernel arguments! %d\n", err);
-    printf("Test failed\n");
+    printf("Error: Failed to set kernel arguments! %d\n", status);
     exit(1);
   }
 
   // Execute the kernel over the entire range of our 1d input data set
   // using the maximum number of work group items for this device
   //
-
-#ifdef C_KERNEL
-  err = clEnqueueTask(commands, kernel, 0, NULL, NULL);
+#ifdef OPENCL_KERNEL
+  status = clEnqueueTask(commands, kernel, 0, NULL, NULL);
 #else
-  printf("Error: OpenCL kernel is not currently supported!\n");
+  printf("Error: C kernel is not currently supported!\n");
   exit(1);
 #endif
-  if (err)
+  if (status)
   {
-    printf("Error: Failed to execute kernel! %d\n", err);
+    printf("Error: Failed to execute kernel! %d\n", status);
     printf("Test failed\n");
     exit(1);
   }
+  clFinish(commands);
 
   // Read back the results from the device to verify the output
   //
-  err = clEnqueueReadBuffer( commands, value_buffer, CL_TRUE, 0, sizeof(args->buf), args->buf, 0, NULL, NULL );  
-  if (err != CL_SUCCESS)
-  {
-    printf("Error: Failed to read output array! %d\n", err);
-    printf("Test failed\n");
-    exit(1);
-  }
+  memcpy(args->buf, buf_buffer, sizeof(args->buf));
 }
 
 /* Input format:

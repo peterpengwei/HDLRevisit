@@ -22,6 +22,7 @@ void run_benchmark( void *vargs, cl_context& context,
   //
   memcpy(m1_buffer, args->m1, sizeof(args->m1));
   memcpy(m2_buffer, args->m2, sizeof(args->m2));
+  memcpy(prod_buffer, args->prod, sizeof(args->prod));
     
   // Set the arguments to our compute kernel
   //
