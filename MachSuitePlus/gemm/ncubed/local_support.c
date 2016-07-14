@@ -1,6 +1,7 @@
 #include "gemm.h"
 #include "support.h"
 #include <string.h>
+#include "my_timer.h"
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
@@ -8,6 +9,10 @@ int INPUT_SIZE = sizeof(struct bench_args_t);
 
 void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands, cl_program& program, cl_kernel& kernel ) {
   struct bench_args_t *args = (struct bench_args_t *)vargs;
+
+  // 0th: initialize the timer at the beginning of the program
+  timespec timer = tic();
+
   // Create device buffers
   //
   cl_mem m1_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(args->m1), NULL, NULL);
@@ -20,6 +25,9 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
     exit(1);
   }    
 
+  // 1st: time of buffer allocation
+  toc(&timer, "buffer allocation");
+
   // Write our data set into device buffers  
   //
   int err;
@@ -31,6 +39,9 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
       printf("Test failed\n");
       exit(1);
   }
+
+  // 2nd: time of pageable-pinned memory copy
+  toc(&timer, "memory copy");
     
   // Set the arguments to our compute kernel
   //
@@ -43,6 +54,9 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
     printf("Test failed\n");
     exit(1);
   }
+
+  // 3rd: time of setting arguments
+  toc(&timer, "set arguments");
 
   // Execute the kernel over the entire range of our 1d input data set
   // using the maximum number of work group items for this device
@@ -61,6 +75,10 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
     exit(1);
   }
 
+  // 4th: time of kernel execution
+  clFinish(commands);
+  toc(&timer, "kernel execution");
+
   // Read back the results from the device to verify the output
   //
   err = clEnqueueReadBuffer( commands, prod_buffer, CL_TRUE, 0, sizeof(args->prod), args->prod, 0, NULL, NULL );  
@@ -70,6 +88,9 @@ void run_benchmark( void *vargs, cl_context& context, cl_command_queue& commands
     printf("Test failed\n");
     exit(1);
   }
+
+  // 5th: time of data retrieving (PCIe + memcpy)
+  toc(&timer, "data retrieving");
 }
 
 /* Input format:
