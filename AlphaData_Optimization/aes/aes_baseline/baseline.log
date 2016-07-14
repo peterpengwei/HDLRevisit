@@ -1,0 +1,9 @@
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading workload_baseline.xclbin
+buffer allocation: 3.590617000
+memory copy: 0.016796654
+set arguments: 0.000018480
+kernel execution: 2385.970057470
+data retrieving: 0.037516248
+Success.
