@@ -1,0 +1,11 @@
+./nw/pkg/pcie/nw.exe input.data check.data ./nw/pkg/pcie/workload.xclbin
+Benchmark results are incorrect
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./nw/pkg/pcie/workload.xclbin
+buffer allocation: 0.014384867
+memory copy: 0.001912739
+set arguments: 0.000010678
+kernel execution: 0.191153888
+data retrieving: 0.019659850
+make: *** [run] Error 255

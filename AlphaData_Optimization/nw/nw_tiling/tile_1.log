@@ -1,0 +1,10 @@
+./nw/pkg/pcie/nw.exe input.data check.data ./nw/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./nw/pkg/pcie/workload.xclbin
+buffer allocation: 0.014879682
+memory copy: 0.009397790
+set arguments: 0.000008004
+kernel execution: 43.903408119
+data retrieving: 0.024725701
+Success.
