@@ -11,7 +11,7 @@
 #define BACK_TO_TABLES
 #ifdef BACK_TO_TABLES
 
-#define BUF_SIZE_OFFSET 12
+#define BUF_SIZE_OFFSET 18
 #define BUF_SIZE ((1) << (BUF_SIZE_OFFSET))
 
 #define UNROLL_FACTOR 128
@@ -109,7 +109,10 @@ void aes_subBytes(uint8_t *buf)
 {
     register uint8_t i = 16;
 
-    sub : while (i--) buf[i] = rj_sbox(buf[i]);
+    sub : while (i--) {
+    #pragma HLS PIPELINE
+      buf[i] = rj_sbox(buf[i]);
+    }
 } /* aes_subBytes */
 
 /* -------------------------------------------------------------------------- */
@@ -117,7 +120,10 @@ void aes_addRoundKey(uint8_t *buf, uint8_t *key)
 {
     register uint8_t i = 16;
 
-    addkey : while (i--) buf[i] ^= key[i];
+    addkey : while (i--) {
+    #pragma HLS PIPELINE
+	buf[i] ^= key[i];
+    }
 } /* aes_addRoundKey */
 
 /* -------------------------------------------------------------------------- */
@@ -125,7 +131,10 @@ void aes_addRoundKey_cpy(uint8_t *buf, uint8_t *key, uint8_t *cpk)
 {
     register uint8_t i = 16;
 
-    cpkey : while (i--)  buf[i] ^= (cpk[i] = key[i]), cpk[16+i] = key[16 + i];
+    cpkey : while (i--)  {
+    #pragma HLS PIPELINE
+        buf[i] ^= (cpk[i] = key[i]), cpk[16+i] = key[16 + i];
+    }
 } /* aes_addRoundKey_cpy */
 
 
@@ -166,15 +175,21 @@ void aes_expandEncKey(uint8_t *k, uint8_t *rc)
     k[3] ^= rj_sbox(k[28]);
     *rc = F( *rc);
 
-    exp1 : for(i = 4; i < 16; i += 4)  k[i] ^= k[i-4],   k[i+1] ^= k[i-3],
+    exp1 : for(i = 4; i < 16; i += 4) {
+    #pragma HLS PIPELINE
+	k[i] ^= k[i-4],   k[i+1] ^= k[i-3],
         k[i+2] ^= k[i-2], k[i+3] ^= k[i-1];
+    }
     k[16] ^= rj_sbox(k[12]);
     k[17] ^= rj_sbox(k[13]);
     k[18] ^= rj_sbox(k[14]);
     k[19] ^= rj_sbox(k[15]);
 
-    exp2 : for(i = 20; i < 32; i += 4) k[i] ^= k[i-4],   k[i+1] ^= k[i-3],
+    exp2 : for(i = 20; i < 32; i += 4) {
+    #pragma HLS PIPELINE
+	k[i] ^= k[i-4],   k[i+1] ^= k[i-3],
         k[i+2] ^= k[i-2], k[i+3] ^= k[i-1];
+    }
 
 } /* aes_expandEncKey */
 
@@ -188,6 +203,7 @@ void aes256_encrypt_ecb(uint8_t k[32], uint8_t buf[16])
     uint8_t i;
 
     ecb1 : for (i = 0; i < 32; i++){
+    #pragma HLS PIPELINE
         ctx->enckey[i] = ctx->deckey[i] = k[i];
     }
     ecb2 : for (i = 8;--i;){
@@ -271,6 +287,8 @@ void workload(uint8_t* key, uint8_t* a, int data_size) {
   #pragma HLS ARRAY_PARTITION variable=buf_partition_x cyclic factor=128 dim=1
   uint8_t buf_partition_y[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
   #pragma HLS ARRAY_PARTITION variable=buf_partition_y cyclic factor=128 dim=1
+  uint8_t buf_partition_z[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
+  #pragma HLS ARRAY_PARTITION variable=buf_partition_z cyclic factor=128 dim=1
   
   uint8_t local_key[32];
   memcpy(local_key, key, 32);
@@ -283,15 +301,20 @@ void workload(uint8_t* key, uint8_t* a, int data_size) {
     int load_size = BUF_SIZE;
     int compute_size = BUF_SIZE;
     int store_size = BUF_SIZE;
-    if (i % 2 == 0) {
-      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_x);
+    if (i % 3 == 0) {
       buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_x);
-      buffer_compute(compute_flag, buf_partition_y, compute_size, local_key);
-    } 
-    else {
+      buffer_compute(compute_flag, buf_partition_z, compute_size, local_key);
       buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_y);
+    } 
+    else if (i % 3 == 1) {
       buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_y);
       buffer_compute(compute_flag, buf_partition_x, compute_size, local_key);
+      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_z);
+    } 
+    else {
+      buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_z);
+      buffer_compute(compute_flag, buf_partition_y, compute_size, local_key);
+      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_x);
     } 
   }
   return;

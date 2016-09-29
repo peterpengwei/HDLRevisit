@@ -271,6 +271,8 @@ void workload(uint8_t* key, uint8_t* a, int data_size) {
   #pragma HLS ARRAY_PARTITION variable=buf_partition_x cyclic factor=128 dim=1
   uint8_t buf_partition_y[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
   #pragma HLS ARRAY_PARTITION variable=buf_partition_y cyclic factor=128 dim=1
+  uint8_t buf_partition_z[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
+  #pragma HLS ARRAY_PARTITION variable=buf_partition_z cyclic factor=128 dim=1
   
   uint8_t local_key[32];
   memcpy(local_key, key, 32);
@@ -283,15 +285,20 @@ void workload(uint8_t* key, uint8_t* a, int data_size) {
     int load_size = BUF_SIZE;
     int compute_size = BUF_SIZE;
     int store_size = BUF_SIZE;
-    if (i % 2 == 0) {
-      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_x);
+    if (i % 3 == 0) {
       buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_x);
-      buffer_compute(compute_flag, buf_partition_y, compute_size, local_key);
-    } 
-    else {
+      buffer_compute(compute_flag, buf_partition_z, compute_size, local_key);
       buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_y);
+    } 
+    else if (i % 3 == 1) {
       buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_y);
       buffer_compute(compute_flag, buf_partition_x, compute_size, local_key);
+      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_z);
+    } 
+    else {
+      buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_z);
+      buffer_compute(compute_flag, buf_partition_y, compute_size, local_key);
+      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_x);
     } 
   }
   return;

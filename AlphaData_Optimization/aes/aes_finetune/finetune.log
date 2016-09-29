@@ -1,0 +1,9 @@
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading aes/impl/build/system/workload/bitstream/workload.xclbin
+buffer allocation: 0.030412369
+memory copy: 0.010787430
+set arguments: 0.000013604
+kernel execution: 0.525545559
+data retrieving: 0.023852696
+Success.

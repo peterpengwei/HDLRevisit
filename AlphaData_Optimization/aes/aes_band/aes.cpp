@@ -266,12 +266,6 @@ void aes_cacheline(uint256_t* local_key, uint512_t* buf) {
     (*buf)(128*1+127, 128*1) = value[1];
     (*buf)(128*2+127, 128*2) = value[2];
     (*buf)(128*3+127, 128*3) = value[3];
-    // for (i=0; i<4; i++) {
-    // #pragma HLS UNROLL
-    //         value[i] = (*buf)(128*i+127, 128*i);
-    //     aes256_encrypt_ecb(local_key, &value[i]);
-    //         (*buf)(128*i+127, 128*i) = value[i];
-    // }
 }
 
 void aes_tiling(uint256_t* local_key, uint512_t* buf) {
