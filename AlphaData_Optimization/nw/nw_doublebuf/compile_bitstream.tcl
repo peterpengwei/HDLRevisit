@@ -24,8 +24,6 @@ create_compute_unit -opencl_binary [get_opencl_binary workload] -kernel [get_ker
 # Compile the design for CPU based emulation
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]
 
-set_param compiler.worstNegativeSlack -1.0
-
 # Run the compiled application in CPU based emulation mode
 run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_doublebuf/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_doublebuf/check.data workload.xclbin"
 

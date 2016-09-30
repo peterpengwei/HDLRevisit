@@ -29,7 +29,7 @@ set_param compiler.worstNegativeSlack -2
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]
 
 # Run the compiled application in CPU based emulation mode
-run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_finetune/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_finetune/check.data workload.xclbin"
+run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_band/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_band/check.data workload.xclbin"
 
 # Compile the application to run on the accelerator card
 build_system

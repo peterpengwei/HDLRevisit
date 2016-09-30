@@ -12,8 +12,8 @@
 
 #define MAX(A,B) ( ((A)>(B))?(A):(B) )
 
-#define JOBS_PER_BATCH 512
-#define UNROLL_FACTOR 64
+#define JOBS_PER_BATCH 256
+#define UNROLL_FACTOR 32
 #define JOBS_PER_PE ((JOBS_PER_BATCH)/(UNROLL_FACTOR))
 
 
@@ -36,6 +36,10 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
     #pragma HLS UNROLL
         M_former[a_idx] = a_idx*GAP_SCORE;
     }
+    for (a_idx=0; a_idx<ALEN+1; a_idx++) {
+    #pragma HLS PIPELINE
+        ptr[a_idx] = SKIPB;
+    }
 
     // Matrix filling loop
     fill_out: for(b_idx=1; b_idx<(BLEN+1); b_idx++){
@@ -43,6 +47,7 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
 	#pragma HLS PIPELINE
 	    if (a_idx == 0) {
 	        M_latter[0] = b_idx * GAP_SCORE;
+		ptr[b_idx*(ALEN+1)] = SKIPA;
 	    }
 	    else {
                 if(SEQA[a_idx-1] == SEQB[b_idx-1]){
@@ -95,8 +100,8 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
     a_str_idx = 0;
     b_str_idx = 0;
 
-    trace: while(a_idx>0 && b_idx>0) {
-    //trace: while(a_idx>0 || b_idx>0) {
+    trace: while(a_idx>0 || b_idx>0) {
+    #pragma HLS PIPELINE
         r = b_idx*(ALEN+1);
         if (ptr[r + a_idx] == ALIGN){
             alignedA[a_str_idx++] = SEQA[a_idx-1];
@@ -118,9 +123,11 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
 
     // Pad the result
     pad_a: for( ; a_str_idx<ALEN+BLEN; a_str_idx++ ) {
+    #pragma HLS PIPELINE
       alignedA[a_str_idx] = '_';
     }
     pad_b: for( ; b_str_idx<ALEN+BLEN; b_str_idx++ ) {
+    #pragma HLS PIPELINE
       alignedB[b_str_idx] = '_';
     }
 }

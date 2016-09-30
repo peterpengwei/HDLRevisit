@@ -39,11 +39,13 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
     // b_idx = 0
     for (a_idx=0; a_idx<ALEN+1; a_idx++) {
         M_former[a_idx] = a_idx*GAP_SCORE;
+	ptr[a_idx] = SKIPB;
     }
 
     // Matrix filling loop
     fill_out: for(b_idx=1; b_idx<(BLEN+1); b_idx++){
 	M_latter[0] = M_former[0] + GAP_SCORE;
+	ptr[b_idx*(ALEN+1)] = SKIPA;
         fill_in: for(a_idx=1; a_idx<(ALEN+1); a_idx++){
             if(SEQA[a_idx-1] == SEQB[b_idx-1]){
                 score = MATCH_SCORE;
@@ -145,8 +147,10 @@ void workload(char* SEQA, char* SEQB,
 	int i, j, k;
 	major_loop: for (i=0; i<num_batches; i++) {
 	    // step 1: copy data in
-	    reshape1: for (j=0; j<UNROLL_FACTOR; j++) {
+	    reshape1_a: for (j=0; j<UNROLL_FACTOR; j++) {
 	        memcpy(seqA_buf[j], SEQA + i*(ALEN*JOBS_PER_BATCH) + j*(ALEN*JOBS_PER_PE), ALEN*JOBS_PER_PE);
+	    }
+	    reshape1_b: for (j=0; j<UNROLL_FACTOR; j++) {
 	        memcpy(seqB_buf[j], SEQB + i*(BLEN*JOBS_PER_BATCH) + j*(BLEN*JOBS_PER_PE), BLEN*JOBS_PER_PE);
 	    }
 	    // step 2: do the jobs
@@ -155,8 +159,10 @@ void workload(char* SEQA, char* SEQB,
 		needwun_tiling(seqA_buf[j], seqB_buf[j], alignedA_buf[j], alignedB_buf[j]);
 	    }
 	    // step 3: copy results back
-	    reshape2: for (j=0; j<UNROLL_FACTOR; j++) {
+	    reshape2_a: for (j=0; j<UNROLL_FACTOR; j++) {
 	        memcpy(alignedA + i*((ALEN+BLEN)*JOBS_PER_BATCH) + j*(ALEN+BLEN)*JOBS_PER_PE, alignedA_buf[j], (ALEN+BLEN)*JOBS_PER_PE);
+	    }
+	    reshape2_b: for (j=0; j<UNROLL_FACTOR; j++) {
 	        memcpy(alignedB + i*((ALEN+BLEN)*JOBS_PER_BATCH) + j*(ALEN+BLEN)*JOBS_PER_PE, alignedB_buf[j], (ALEN+BLEN)*JOBS_PER_PE);
 	    }
 	}
