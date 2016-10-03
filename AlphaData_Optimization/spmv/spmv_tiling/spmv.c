@@ -5,7 +5,7 @@ http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1
 
 #include "spmv.h"
 
-#define ROWS_PER_TILE 1
+#define ROWS_PER_TILE 256
 
 void ellpack(TYPE* nzval, short* cols, TYPE* vec, TYPE* out)
 {
