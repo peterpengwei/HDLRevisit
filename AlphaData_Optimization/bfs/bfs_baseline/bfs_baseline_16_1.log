@@ -1,0 +1,10 @@
+./bfs/pkg/pcie/bfs.exe input.data check.data ./bfs/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./bfs/pkg/pcie/workload.xclbin
+buffer allocation: 0.000014225
+memory copy: 0.000542013
+set arguments: 0.000007656
+kernel execution: 0.080236583
+data retrieving: 0.000119273
+Success.
