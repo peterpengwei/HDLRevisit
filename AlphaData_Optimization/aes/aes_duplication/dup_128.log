@@ -1,9 +1,0 @@
-CL_PLATFORM_VENDOR Xilinx
-CL_PLATFORM_NAME Xilinx
-loading aes_128/pkg/pcie/workload.xclbin
-buffer allocation: 0.032332626
-memory copy: 0.035649107
-set arguments: 0.000014610
-kernel execution: 1.444467464
-data retrieving: 0.030565231
-Success.

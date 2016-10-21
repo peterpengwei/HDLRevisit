@@ -231,91 +231,45 @@ void aes_tiling(uint8_t* local_key, uint8_t* buf) {
         aes256_encrypt_ecb(local_key, buf + k);
 }
 
-void buffer_load(int flag, int size, uint8_t* global_buf, uint8_t part_buf[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR]) {
-#pragma HLS INLINE off
-  if (flag) {
-    for (int i=0; i<UNROLL_FACTOR; i++) {
-      memcpy(part_buf[i], global_buf + i * (BUF_SIZE/UNROLL_FACTOR), BUF_SIZE/UNROLL_FACTOR);
-    }
-  }
-  return;
-}
+void workload( uint8_t* key, uint8_t* data, int size ) {
+#pragma HLS INTERFACE m_axi port=key offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=data offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=key bundle=control
+#pragma HLS INTERFACE s_axilite port=data bundle=control
+#pragma HLS INTERFACE s_axilite port=size bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
 
-void buffer_store(int flag, int size, uint8_t* global_buf, uint8_t part_buf[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR]) {
-#pragma HLS INLINE off
-  if (flag) {
-    for (int i=0; i<UNROLL_FACTOR; i++) {
-      memcpy(global_buf + i * (BUF_SIZE/UNROLL_FACTOR), part_buf[i], BUF_SIZE/UNROLL_FACTOR);
-    }
-  }
-  return;
-}
-
-void buffer_compute(int flag, uint8_t buf[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR], int size, uint8_t* key) {
-#pragma HLS INLINE off
-  if (flag) {
     uint8_t local_key[UNROLL_FACTOR][32];
     #pragma HLS ARRAY_PARTITION variable=local_key cyclic factor=128 dim=1
 
     int i,j,k;
+    memcpy(local_key[0], key, 32);
     for (j=0; j<32; j++) {
     #pragma HLS PIPELINE
-        for (i=0; i<UNROLL_FACTOR; i++) {
+        for (i=1; i<UNROLL_FACTOR; i++) {
 	#pragma HLS UNROLL
-	    local_key[i][j] = key[j];
+	    local_key[i][j] = local_key[0][j];
 	}
     }
 
-    unroll_loop: for (j=0; j<UNROLL_FACTOR; j++) {
-    #pragma HLS UNROLL
-        aes_tiling(local_key[j], buf[j]);
+    int num_batches = (size + BUF_SIZE - 1) / BUF_SIZE;
+    int tail_size = size % BUF_SIZE;
+    if (tail_size == 0) tail_size = BUF_SIZE;
+
+    uint8_t buf[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
+    #pragma HLS ARRAY_PARTITION variable=buf cyclic factor=128 dim=1
+
+    major_loop: for (i=0; i<num_batches; i++) {
+        reshape1: for (j=0; j<UNROLL_FACTOR; j++) {
+	    memcpy(buf[j], data + i*BUF_SIZE + j*BUF_SIZE/UNROLL_FACTOR, BUF_SIZE/UNROLL_FACTOR);
+	}
+        unroll_loop: for (j=0; j<UNROLL_FACTOR; j++) {
+	#pragma HLS UNROLL
+	    aes_tiling(local_key[j], buf[j]);
+	}
+        reshape2: for (j=0; j<UNROLL_FACTOR; j++) {
+	    memcpy(data + i*BUF_SIZE + j*BUF_SIZE/UNROLL_FACTOR, buf[j], BUF_SIZE/UNROLL_FACTOR);
+	}
     }
-  }
-  return;
-}
-
-void workload(uint8_t* key, uint8_t* a, int data_size) {
-#pragma HLS INTERFACE m_axi port=key offset=slave bundle=gmem1 
-#pragma HLS INTERFACE m_axi port=a offset=slave bundle=gmem2 
-#pragma HLS INTERFACE s_axilite port=key bundle=control
-#pragma HLS INTERFACE s_axilite port=a bundle=control 
-#pragma HLS INTERFACE s_axilite port=data_size bundle=control 
-#pragma HLS INTERFACE s_axilite port=return bundle=control 
-  int num_batches = data_size / BUF_SIZE;
-
-  uint8_t buf_partition_x[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_x cyclic factor=128 dim=1
-  uint8_t buf_partition_y[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_y cyclic factor=128 dim=1
-  uint8_t buf_partition_z[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_z cyclic factor=128 dim=1
-  
-  uint8_t local_key[32];
-  memcpy(local_key, key, 32);
-
-  int i;
-  for (i=0; i<num_batches+2; i++) {
-    int load_flag = i >= 0 && i < num_batches;
-    int compute_flag = i >= 1 && i < num_batches+1;
-    int store_flag = i >= 2 && i < num_batches+2;
-    int load_size = BUF_SIZE;
-    int compute_size = BUF_SIZE;
-    int store_size = BUF_SIZE;
-    if (i % 3 == 0) {
-      buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_x);
-      buffer_compute(compute_flag, buf_partition_z, compute_size, local_key);
-      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_y);
-    } 
-    else if (i % 3 == 1) {
-      buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_y);
-      buffer_compute(compute_flag, buf_partition_x, compute_size, local_key);
-      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_z);
-    } 
-    else {
-      buffer_load(load_flag, load_size, a+i*BUF_SIZE, buf_partition_z);
-      buffer_compute(compute_flag, buf_partition_y, compute_size, local_key);
-      buffer_store(store_flag, store_size, a+(i-2)*BUF_SIZE, buf_partition_x);
-    } 
-  }
-  return;
+    return;
 }

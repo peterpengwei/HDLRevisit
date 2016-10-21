@@ -25,7 +25,7 @@ create_compute_unit -opencl_binary [get_opencl_binary workload] -kernel [get_ker
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]
 
 # Run the compiled application in CPU based emulation mode
-run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/aes/aes_duplication/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/aes/aes_duplication/check.data workload.xclbin"
+run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/aes/aes_pipeline/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/aes/aes_pipeline/check.data workload.xclbin"
 
 # Compile the application to run on the accelerator card
 build_system

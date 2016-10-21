@@ -1,0 +1,10 @@
+./aes/pkg/pcie/aes.exe input.data check.data ./aes/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./aes/pkg/pcie/workload.xclbin
+buffer allocation: 0.000020459
+memory copy: 0.021365435
+set arguments: 0.000012220
+kernel execution: 1.378848097
+data retrieving: 0.022153789
+Success.

@@ -1,6 +1,6 @@
 # Define the solution for SDAccel
 create_solution -name aes -dir . -force
-add_device -vbnv xilinx:adm-pcie-7v3:1ddr:2.1
+add_device -vbnv xilinx:adm-pcie-7v3:1ddr:3.0
 
 # Host Compiler Flags
 set_property -name host_cflags -value "-g -Wall -D FPGA_DEVICE -D C_KERNEL -I/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/common"  -objects [current_solution]
@@ -20,10 +20,6 @@ add_files -kernel [get_kernels workload] "aes.h"
 create_opencl_binary workload
 set_property region "OCL_REGION_0" [get_opencl_binary workload]
 create_compute_unit -opencl_binary [get_opencl_binary workload] -kernel [get_kernels workload] -name k1
-
-set_param compiler.preserveXoccTempProjectDir 1
-set_param compiler.preserveHlsOutput 1
-set_param compiler.worstNegativeSlack -1
 
 # Compile the design for CPU based emulation
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]

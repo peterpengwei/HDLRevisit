@@ -25,7 +25,7 @@ extern "C" {
 #define BACK_TO_TABLES
 #ifdef BACK_TO_TABLES
 
-#define BUF_SIZE_OFFSET 16
+#define BUF_SIZE_OFFSET 19
 #define BUF_SIZE ((1) << (BUF_SIZE_OFFSET))
 
 #define UNROLL_FACTOR 16
@@ -300,7 +300,7 @@ void buffer_compute(int flag, uint512_t buf[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTO
 #pragma HLS INLINE off
   if (flag) {
     uint256_t local_key[UNROLL_FACTOR];
-    #pragma HLS ARRAY_PARTITION variable=local_key cyclic factor=16 dim=1
+    #pragma HLS ARRAY_PARTITION variable=local_key complete dim=1
 
     int i,j,k;
     for (i=0; i<UNROLL_FACTOR; i++) {
@@ -326,11 +326,11 @@ void workload(uint256_t* key, uint512_t* a, int data_size) {
   int num_batches = data_size / BUF_SIZE;
 
   uint512_t buf_partition_x[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR/64];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_x cyclic factor=16 dim=1
+  #pragma HLS ARRAY_PARTITION variable=buf_partition_x complete dim=1
   uint512_t buf_partition_y[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR/64];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_y cyclic factor=16 dim=1
+  #pragma HLS ARRAY_PARTITION variable=buf_partition_y complete dim=1
   uint512_t buf_partition_z[UNROLL_FACTOR][BUF_SIZE/UNROLL_FACTOR/64];
-  #pragma HLS ARRAY_PARTITION variable=buf_partition_z cyclic factor=16 dim=1
+  #pragma HLS ARRAY_PARTITION variable=buf_partition_z complete dim=1
   
   uint256_t local_key = *key;
 
