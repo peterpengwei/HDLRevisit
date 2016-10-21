@@ -12,8 +12,8 @@
 
 #define MAX(A,B) ( ((A)>(B))?(A):(B) )
 
-#define JOBS_PER_BATCH 256
-#define UNROLL_FACTOR 32
+#define JOBS_PER_BATCH 512
+#define UNROLL_FACTOR 64
 #define JOBS_PER_PE ((JOBS_PER_BATCH)/(UNROLL_FACTOR))
 
 

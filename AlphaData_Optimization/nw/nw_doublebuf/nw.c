@@ -12,7 +12,7 @@
 #define MAX(A,B) ( ((A)>(B))?(A):(B) )
 
 #define JOBS_PER_BATCH 256
-#define UNROLL_FACTOR 32
+#define UNROLL_FACTOR 64
 #define JOBS_PER_PE ((JOBS_PER_BATCH)/(UNROLL_FACTOR))
 
 
@@ -193,24 +193,24 @@ void workload(char* SEQA, char* SEQB,
   int num_batches = num_jobs / JOBS_PER_BATCH;
 
   char seqA_buf_x[UNROLL_FACTOR][ALEN * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=seqA_buf_x cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=seqA_buf_x complete dim=1
   char seqA_buf_y[UNROLL_FACTOR][ALEN * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=seqA_buf_y cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=seqA_buf_y complete dim=1
 
   char seqB_buf_x[UNROLL_FACTOR][BLEN * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=seqB_buf_x cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=seqB_buf_x complete dim=1
   char seqB_buf_y[UNROLL_FACTOR][BLEN * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=seqB_buf_y cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=seqB_buf_y complete dim=1
 
   char alignedA_buf_x[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=alignedA_buf_x cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=alignedA_buf_x complete dim=1
   char alignedA_buf_y[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=alignedA_buf_y cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=alignedA_buf_y complete dim=1
 
   char alignedB_buf_x[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=alignedB_buf_x cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=alignedB_buf_x complete dim=1
   char alignedB_buf_y[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-  #pragma HLS ARRAY_PARTITION variable=alignedB_buf_y cyclic factor=32 dim=1
+  #pragma HLS ARRAY_PARTITION variable=alignedB_buf_y complete dim=1
 
   int i;
   for (i=0; i<num_batches+2; i++) {

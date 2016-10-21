@@ -1,6 +1,6 @@
 # Define the solution for SDAccel
 create_solution -name nw -dir . -force
-add_device -vbnv xilinx:adm-pcie-7v3:1ddr:2.1
+add_device -vbnv xilinx:adm-pcie-7v3:1ddr:3.0
 
 # Host Compiler Flags
 set_property -name host_cflags -value "-g -Wall -D FPGA_DEVICE -D C_KERNEL -I/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/common"  -objects [current_solution]
@@ -23,8 +23,6 @@ create_compute_unit -opencl_binary [get_opencl_binary workload] -kernel [get_ker
 
 # Compile the design for CPU based emulation
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]
-
-set_param compiler.worstNegativeSlack -1.0
 
 # Run the compiled application in CPU based emulation mode
 run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_pipeline/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/nw/nw_pipeline/check.data workload.xclbin"

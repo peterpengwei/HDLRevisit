@@ -11,7 +11,7 @@
 #define MAX(A,B) ( ((A)>(B))?(A):(B) )
 
 #define JOBS_PER_BATCH 256
-#define UNROLL_FACTOR 32
+#define UNROLL_FACTOR 64
 #define JOBS_PER_PE ((JOBS_PER_BATCH)/(UNROLL_FACTOR))
 
 
@@ -153,13 +153,13 @@ void workload(char* SEQA, char* SEQB,
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
 	char seqA_buf[UNROLL_FACTOR][ALEN * JOBS_PER_PE];
-	#pragma HLS ARRAY_PARTITION variable=seqA_buf cyclic factor=32 dim=1
+	#pragma HLS ARRAY_PARTITION variable=seqA_buf complete dim=1
 	char seqB_buf[UNROLL_FACTOR][BLEN * JOBS_PER_PE];
-	#pragma HLS ARRAY_PARTITION variable=seqB_buf cyclic factor=32 dim=1
+	#pragma HLS ARRAY_PARTITION variable=seqB_buf complete dim=1
 	char alignedA_buf[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-	#pragma HLS ARRAY_PARTITION variable=alignedA_buf cyclic factor=32 dim=1
+	#pragma HLS ARRAY_PARTITION variable=alignedA_buf complete dim=1
 	char alignedB_buf[UNROLL_FACTOR][(ALEN+BLEN) * JOBS_PER_PE];
-	#pragma HLS ARRAY_PARTITION variable=alignedB_buf cyclic factor=32 dim=1
+	#pragma HLS ARRAY_PARTITION variable=alignedB_buf complete dim=1
 
 	int num_batches = num_jobs / JOBS_PER_BATCH;
 

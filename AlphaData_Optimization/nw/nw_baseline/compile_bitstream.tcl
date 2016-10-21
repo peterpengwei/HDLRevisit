@@ -1,6 +1,6 @@
 # Define the solution for SDAccel
 create_solution -name nw -dir . -force
-add_device -vbnv xilinx:adm-pcie-7v3:1ddr:2.1
+add_device -vbnv xilinx:adm-pcie-7v3:1ddr:3.0
 
 # Host Compiler Flags
 set_property -name host_cflags -value "-g -Wall -D FPGA_DEVICE -D C_KERNEL -I/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/common"  -objects [current_solution]
