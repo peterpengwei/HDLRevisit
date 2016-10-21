@@ -1,0 +1,10 @@
+./kmp/pkg/pcie/kmp.exe input.data check.data ./kmp/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./kmp/pkg/pcie/workload.xclbin
+buffer allocation: 0.034318861
+memory copy: 0.014403918
+set arguments: 0.000011733
+kernel execution: 1.018460980
+data retrieving: 0.000128136
+Success.
