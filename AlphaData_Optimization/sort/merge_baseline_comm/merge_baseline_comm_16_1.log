@@ -1,0 +1,10 @@
+./sort/pkg/pcie/sort.exe ../merge_baseline/input.data ../merge_baseline/check.data ./sort/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./sort/pkg/pcie/workload.xclbin
+buffer allocation: 0.000020001
+memory copy: 0.042395516
+set arguments: 0.000007772
+kernel execution: 0.024901092
+data retrieving: 0.084017148
+Success.
