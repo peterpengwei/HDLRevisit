@@ -1,0 +1,11 @@
+./gemm/pkg/pcie/gemm.exe input.data check.data ./gemm/pkg/pcie/workload.xclbin
+Benchmark results are incorrect
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./gemm/pkg/pcie/workload.xclbin
+buffer allocation: 0.000028196
+memory copy: 0.005793816
+set arguments: 0.000006803
+kernel execution: 0.189150110
+data retrieving: 0.005676732
+make: *** [run] Error 255
