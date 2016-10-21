@@ -1,0 +1,10 @@
+./spmv/pkg/pcie/spmv.exe input.data check.data ./spmv/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./spmv/pkg/pcie/workload.xclbin
+buffer allocation: 0.000028559
+memory copy: 0.008245811
+set arguments: 0.000007246
+kernel execution: 0.255850712
+data retrieving: 0.000114060
+Success.

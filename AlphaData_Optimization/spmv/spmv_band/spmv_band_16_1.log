@@ -1,0 +1,11 @@
+./spmv/pkg/pcie/spmv.exe input.data check.data ./spmv/pkg/pcie/workload.xclbin
+Benchmark results are incorrect
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./spmv/pkg/pcie/workload.xclbin
+buffer allocation: 0.000026997
+memory copy: 0.007604426
+set arguments: 0.000009764
+kernel execution: 0.007942963
+data retrieving: 0.000104478
+make: *** [run] Error 255
