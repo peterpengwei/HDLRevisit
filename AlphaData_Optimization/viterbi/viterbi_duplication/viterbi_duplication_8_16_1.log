@@ -1,0 +1,10 @@
+./viterbi/pkg/pcie/viterbi.exe input.data check.data ./viterbi/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./viterbi/pkg/pcie/workload.xclbin
+buffer allocation: 0.000030458
+memory copy: 0.130942628
+set arguments: 0.000009597
+kernel execution: 50.931875736
+data retrieving: 0.075621226
+Success.

@@ -13,7 +13,7 @@ set_property file_type "c header files" [get_files "viterbi.h"]
 
 # Kernel Definition
 create_kernel workload -type c
-add_files -kernel [get_kernels workload] "viterbi.c"
+add_files -kernel [get_kernels workload] "viterbi.cpp"
 add_files -kernel [get_kernels workload] "viterbi.h"
 
 # Define Binary Containers
@@ -25,7 +25,7 @@ create_compute_unit -opencl_binary [get_opencl_binary workload] -kernel [get_ker
 compile_emulation -flow cpu -opencl_binary [get_opencl_binary workload]
 
 # Run the compiled application in CPU based emulation mode
-run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/viterbi/viterbi_baseline/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/viterbi/viterbi_baseline/check.data workload.xclbin"
+run_emulation -flow cpu -args "/curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/viterbi/viterbi_doublebuf/input.data /curr/pengwei/ISCA17/HDLRevisit/AlphaData_Optimization/viterbi/viterbi_doublebuf/check.data workload.xclbin"
 
 # Compile the application to run on the accelerator card
 build_system

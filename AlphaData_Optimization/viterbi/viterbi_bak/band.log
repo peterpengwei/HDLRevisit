@@ -1,0 +1,3 @@
+./viterbi/pkg/pcie/viterbi.exe input.data check.data ./viterbi/pkg/pcie/workload.xclbin
+make: ./viterbi/pkg/pcie/viterbi.exe: Command not found
+make: *** [run] Error 127
