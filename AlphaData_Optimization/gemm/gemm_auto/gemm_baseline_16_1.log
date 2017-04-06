@@ -1,0 +1,10 @@
+./gemm/pkg/pcie/gemm.exe input.data check.data ./gemm/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./gemm/pkg/pcie/workload.xclbin
+buffer allocation: 0.000027254
+memory copy: 0.006688011
+set arguments: 0.000007028
+kernel execution: 734.444730809
+data retrieving: 0.005688963
+Success.
