@@ -1,0 +1,10 @@
+./stencil/pkg/pcie/stencil.exe /curr/pengwei/input.data /curr/pengwei/check.data ./stencil/pkg/pcie/workload.xclbin
+CL_PLATFORM_VENDOR Xilinx
+CL_PLATFORM_NAME Xilinx
+loading ./stencil/pkg/pcie/workload.xclbin
+buffer allocation: 0.000022814
+memory copy: 0.024108326
+set arguments: 0.000018514
+kernel execution: 99.386922589
+data retrieving: 0.031160751
+Success.
